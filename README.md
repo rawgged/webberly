@@ -32,6 +32,15 @@ wbyArray[0] = ['sample/images/large/image1.jpg','sample/images/thumbs/thumb1.jpg
 - The image src and image thumbnail src should be relative to webberly.php document
 - Webberly makes use of icomoon fonts which is located in the dependencies folder, if you already have icomoon loaded on your project just make reference to it on the target page
 
+### Why you may need Webberly
+Webberly runs on plain js and php and has been tested and seen to have optimal performance on top modern browsers like Mozilla firefox, Google Chrome and Safari e.t.c
+
+Webberly is useful when it comes to projects with dynamic contents and images which gives it an edge over html and css image viewers with sliders.
+
+Webberly suppports both Mouse and touch devices, image reel can be moved with both input methods.
+
+Webberly is also useful when you have images that don't have the same dimension, webberly neatly scales the images in the viewer - plus - also has an expanded viewer that displays an image in its natural dimensions and scales down the image dimensions to 98% of the browser viewport if the image natural width is larger the browser viewport
+
 ### Dependencies
 Icomoon fonts
 
