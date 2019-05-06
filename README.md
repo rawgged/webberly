@@ -29,7 +29,7 @@ Webberly was created to give web developers an option of having an image viewer 
 wbyArray[0] = ['sample/images/large/image1.jpg','sample/images/thumbs/thumb1.jpg','Webberly'];
 ```
 
-- The image src and image thumbnail src should be relative to webberly.php document
+- The image src must be a relative path to webberly.php file while the image thumbnail src could either be an absolute path or relative path to the target page.
 - Webberly makes use of icomoon fonts which is located in the dependencies folder, if you already have icomoon loaded on your project just make reference to it on the target page
 
 ### Why you may need Webberly
