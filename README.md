@@ -29,7 +29,32 @@ Webberly was created to give web developers an option of having an image viewer 
 wbyArray[0] = ['sample/images/large/image1.jpg','sample/images/thumbs/thumb1.jpg','Webberly'];
 ```
 
-- The image src must be a relative path to webberly.php file while the image thumbnail src could either be an absolute path or relative path to the target page.
+- The image src and image thumb src can be an absolute path or relative path to the target page if useJSOnly property is set to true. Otherwise, the image src must be a relative path to webberly.php
+
+```js
+useJSOnly : true,//Set to false if you prefer images to load from php script
+```
+
+- If useJSOnly is set to false, you will have to set the requestDir property to the full absolute path of the directory webberly.php script is located or to the path of the directory relative to the target page.
+
+```js
+requestDir : 'https://www.4relic.com/webberly/',
+//or
+//requestDir : 'webberly/', assuming target page is located on the home directory 
+	/*
+	* This configuration preset setting assumes that webberly folder is placed on the home directory of your web/app, 
+	* change this setting to the absolute path of webberly folder e.g https://www.4relic.com/webberly/ or to the 
+	* relative path in reference to the target page e.g webberly/ , plugin/webberly/
+	*/
+	useJSOnly : false,//Set to false if you prefer images to load from php script
+```
+
+- Webberly gallery width is fluid so its adapts to the width of its parent container. However, you can modify the gallery height by adjusting the wbyHeight property
+
+```js
+wbyHeight : 400,//Height of the gallery viewer
+```
+
 - Webberly makes use of icomoon fonts which is located in the dependencies folder, if you already have icomoon loaded on your project just make reference to it on the target page
 
 ### Why you may need Webberly
