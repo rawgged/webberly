@@ -9,12 +9,13 @@
 
 var wby = {
 	webberly : null,//Property to store the target element object
-	requestDir : '/webberly/',
+	requestDir : '',
 	/*
 	* This configuration preset setting assumes that webberly folder is placed on the home directory of your web/app, 
 	* change this setting to the absolute path of webberly folder e.g https://www.4relic.com/webberly/ or to the 
 	* relative path in reference to the target page e.g webberly/ , plugin/webberly/
 	*/
+	useJSOnly : true,//Set to false if you prefer images to load from php script
 	wbyHeight : 400,//Height of the gallery viewer
 	wbyImageReel : null,//Property to store the image reel object
 	wbyReelWidth : null,//Property to store width of the image reel
@@ -26,10 +27,12 @@ var wby = {
 	setIntervalVar : null,//Property to store the setInterval object for the animated scroll effect of image reel 
 	setTimeoutVar : null,//Property to store the XMLHttpRequest setTimeout object
 	goToPosition : null,//Property to store reel position of selected image
+	eventCache : null,//Property to cache touch event
 	pointerPosX : null,//Property to store horizontal pointer or touch position
-	pointerMovX : null,//Property to store vertical pointer or touch position
+	pointerPosY : null,//Property to store vertical touch position to determine if we will prevent touchstart and touchmove default events based on the vertical and horizontal movement variation 
 	touch : false,//Property set to true if the image reel is held with mouse or touch
 	touchDown : false,//Property set to true if the image reel is held with touch
+	allowDefault : null,//Property that stores the state of the touchmove event to determine if we will prevent the default touchmove listener based on the vertical and horizontal touch movements after the touchstart event[ = null(if the touchmove event has not been fired after the touchstart event); = 1(if the touchmove is more vertical); = 2(if the touchmove is more horizontal)
 	currTagNumber : 1,//Property to store the serial number of current image
 	thumbSize : 70,//Property to store the value for the width and height of the thumbnails
 	thumbReelWidth : null,//Property to store width of the thumbnail reel
@@ -51,28 +54,33 @@ var wby = {
 				wbyArray[i][3] = reelPosition;
 				var thumbPreview = new Image();
 				thumbPreview.src = wbyArray[i][1];
-				if(thumbPreview.width < thumbPreview.height){
-					var imageParentClass = 'wby-responsive-width';
-				}else{
-					var imageParentClass = 'wby-responsive-height';
-				}
 				wby.wbyImg += '<div id="webberly-image-parent-'+tagNumber+'" class="wby-main-image-frame" style="width:'+wby.webberly.offsetWidth+'px;height:'+wby.wbyHeight+'px;"></div>';
-				wby.wbyThumb += '<div class="wby-thumbnail-frame '+imageParentClass+'"><a id="webberly-thumb-'+tagNumber+'" href="javascript:void(0);" onclick="wby.selectImage('+tagNumber+')"><img src="'+wbyArray[i][1]+'" alt="'+wbyArray[i][2]+'"></a></div>';
+				wby.wbyThumb += '<div class="wby-thumbnail-frame wby-responsive-width"><a id="webberly-thumb-'+tagNumber+'" href="javascript:void(0);" onclick="wby.selectImage('+tagNumber+')"><img src="'+wbyArray[i][1]+'" alt="'+wbyArray[i][2]+'"></a></div>';
 			}
-			wby.webberly.innerHTML = '<div class="wby-gallery-frame" style="height:'+wby.wbyHeight+'px"><div class="wby-alt"><i class="icon-images"></i><span id="webberly-alt">'+wbyArray.length+'</span></div><a href="javascript:void(0);" class="wby-gallery-tools" onclick="wby.enlargeView()"><i  class="icon-enlarge2"></i></a><div id="webberly-image-reel" class="wby-main-image-reel" style="width:'+wby.wbyReelWidth+'px;height:'+wby.wbyHeight+'px;left:0px;">'+wby.wbyImg+'</div><div id="webberly-thumbnail-reel-frame" class="wby-thumbnail-reel-frame"><div id="webberly-thumbnail-reel" class="wby-thumbnail-reel" style="width:'+wby.thumbReelWidth+'px;left:0px;">'+wby.wbyThumb+'</div><a href="javascript:void(0);" onclick="wby.scrollThumbReel(\'left\');" id="webberly-thumb-left" class="wby-nav-btn" style="left:0px;display:none;"><i class="icon-arrow-left"></i></a><a href="javascript:void(0);" onclick="wby.scrollThumbReel(\'right\');" id="webberly-thumb-right" class="wby-nav-btn" style="right:0px;display:none;"><i class="icon-arrow-right"></i></a></div></div><div align="center" id="webberly-overlay" class="wby-overlay" style="display:none;"><a href="javascript:void(0);" class="wby-gallery-tools" onclick="this.parentNode.style.display=\'none\'"><i  class="icon-shrink2"></i></a></div>';
+			wby.webberly.innerHTML = '<div class="wby-gallery-frame" style="height:'+wby.wbyHeight+'px"><div class="wby-alt"><i class="icon-images"></i><span id="webberly-alt">'+wbyArray.length+'</span></div><a href="javascript:void(0);" class="wby-gallery-tools" onclick="wby.enlargeView()"><i  class="icon-enlarge2"></i></a><div id="webberly-image-reel" class="wby-main-image-reel" style="width:'+wby.wbyReelWidth+'px;height:'+wby.wbyHeight+'px;left:0px;">'+wby.wbyImg+'</div><div id="webberly-thumbnail-reel-frame" class="wby-thumbnail-reel-frame"><div id="webberly-thumbnail-reel" class="wby-thumbnail-reel" style="width:'+wby.thumbReelWidth+'px;left:0px;">'+wby.wbyThumb+'</div><a href="javascript:void(0);" onclick="wby.scrollThumbReel(\'left\');" id="webberly-thumb-left" class="wby-nav-btn" style="left:0px;display:none;"><i class="icon-arrow-left"></i></a><a href="javascript:void(0);" onclick="wby.scrollThumbReel(\'right\');" id="webberly-thumb-right" class="wby-nav-btn" style="right:0px;display:none;"><i class="icon-arrow-right"></i></a></div></div>';
+			/*This method was used to ensure that no parentNode styles affects the overlay
+			*Overlay was appended to the body
+			*/
+			wby.wbyOverlay = document.createElement('div');
+			wby.wbyOverlay.setAttribute('id', 'webberly-overlay');
+			wby.wbyOverlay.setAttribute('align', 'center');
+			wby.wbyOverlay.setAttribute('class', 'wby-overlay');
+			wby.wbyOverlay.setAttribute('style', 'display:none;');
+			wby.wbyOverlay.innerHTML = '<a href="javascript:void(0);" class="wby-gallery-tools" onclick="this.parentNode.style.display=\'none\'"><i  class="icon-shrink2"></i></a>';
+			document.body.appendChild(wby.wbyOverlay);
 			wby.wbyImageReel = document.getElementById('webberly-image-reel');
 			wby.wbyThumbReel = document.getElementById('webberly-thumbnail-reel');
-			wby.wbyOverlay = document.getElementById('webberly-overlay');
+			wby.scaleThumbnails();
 			wby.toggleThumbNav();
 			wby.selectImage(wby.currTagNumber);
-			/*Adding event needed handlers*/
+			/*Adding event handlers needed*/
 			wby.addEventHandler(window, 'resize', wby.wbyResize);
-			wby.addEventHandler(document, 'touchmove', wby.procCrop);
-			wby.addEventHandler(document, 'mousemove', wby.procCrop);
-			wby.addEventHandler(document, 'touchend', wby.cropRelease);
-			wby.addEventHandler(document, 'mouseup', wby.cropRelease);
-			wby.addEventHandler(wby.wbyImageReel, 'touchstart', wby.cropTouch);
-			wby.addEventHandler(wby.wbyImageReel, 'mousedown', wby.cropHold);
+			wby.addEventHandler(window, 'touchmove', wby.moveReel);
+			wby.addEventHandler(window, 'mousemove', wby.moveReel);
+			wby.addEventHandler(window, 'touchend', wby.releaseReel);
+			wby.addEventHandler(window, 'mouseup', wby.releaseReel);
+			wby.addEventHandler(wby.wbyImageReel, 'touchstart', wby.touchReel);
+			wby.addEventHandler(wby.wbyImageReel, 'mousedown', wby.holdReel);
 		}
 	},
 	
@@ -167,7 +175,20 @@ var wby = {
 			wby.enlargeView();
 		}
 	},
-
+	
+	scaleThumbnails : function(){
+		var wbyThumbReelImgs = this.wbyThumbReel.getElementsByTagName('img');
+		for(var i = 0;i < wbyThumbReelImgs.length;i++){
+			wbyThumbReelImgs[i].onload = function(){	
+				if(this.naturalWidth < this.naturalHeight){
+					this.parentNode.parentNode.setAttribute('class', 'wby-thumbnail-frame wby-responsive-width');
+				}else{
+					this.parentNode.parentNode.setAttribute('class', 'wby-thumbnail-frame wby-responsive-height');
+				}
+			}
+		}
+	},
+	
 	selectImage : function(tagNumber){
 		this.hideError();
 		var i = tagNumber - 1;
@@ -180,12 +201,16 @@ var wby = {
 		wby.gotoAnimate(position);
 		this.highlightThumb(tagNumber);
 		if(!targetImageObj){
-			this.createXmlHttpRequest();
-			this.setTimeoutVar = setTimeout(this.stopRequest, 5000);
-			if(this.xmlHttp != null) {
-				this.xmlHttp.open('GET', this.requestDir+'webberly.php?url='+encodeURIComponent(imgUrl)+'&tagnumber='+encodeURIComponent(tagNumber), true);
-				this.xmlHttp.onreadystatechange = this.handleImageResponse;
-				this.xmlHttp.send();
+			if(this.useJSOnly === true){
+				this.appendImage(tagNumber);
+			}else{
+				this.createXmlHttpRequest();
+				this.setTimeoutVar = setTimeout(this.stopRequest, 10000);
+				if(this.xmlHttp != null) {
+					this.xmlHttp.open('GET', this.requestDir+'webberly.php?url='+encodeURIComponent(imgUrl)+'&tagnumber='+encodeURIComponent(tagNumber), true);
+					this.xmlHttp.onreadystatechange = this.handleImageResponse;
+					this.xmlHttp.send();
+				}
 			}
 		}
 	},
@@ -212,37 +237,44 @@ var wby = {
 					if(image.length > 0){
 						var imageData = image[0].firstChild.nodeValue;
 						tagNumber = tagNumber[0].firstChild.nodeValue;
-						var imageFrame = document.getElementById('webberly-image-parent-'+tagNumber);
-						var img = new Image();
-						img.src = imageData;
-						img.onload = function(){
-						var imgResRatio = img.width / img.height;
-
-						if(img.width >= img.height){
-							var newImageWidth = parseInt(imageFrame.offsetWidth);
-							var newImageHeight = parseInt(newImageWidth / imgResRatio);
-							if(newImageHeight > imageFrame.offsetHeight){
-								newImageHeight = parseInt(newImageHeight - (newImageHeight - imageFrame.offsetHeight));
-								newImageWidth = parseInt(newImageHeight * imgResRatio);
-							}
-						}else{
-							var newImageHeight = parseInt(imageFrame.offsetHeight);
-							var newImageWidth = parseInt(newImageHeight * imgResRatio);
-							if(newImageWidth > imageFrame.offsetWidth){
-								newImageWidth = parseInt(newImageWidth - (newImageWidth - imageFrame.offsetWidth));
-								newImageHeight = parseInt(newImageWidth / imgResRatio);
-							} 
-						}
-						img.width = newImageWidth;
-						img.height = newImageHeight;
-						img.setAttribute('id', 'webberly-image-'+tagNumber);
-						imageFrame.appendChild(img);
-						}
+						wby.appendImage(tagNumber,imageData);
 					}
 				}else{
 					wby.displayError('An error occured, media not found');
 				}
 			}
+		}
+	},
+	
+	appendImage : function(tagNumber,url){
+		var imageFrame = document.getElementById('webberly-image-parent-'+tagNumber);
+		var img = new Image();
+		if(!url){
+			img.src = wbyArray[tagNumber-1][0];
+		}else{
+			img.src = url;
+		}
+		img.onload = function(){
+			var imgResRatio = img.width / img.height;
+			if(img.width >= img.height){
+				var newImageWidth = parseInt(imageFrame.offsetWidth);
+				var newImageHeight = parseInt(newImageWidth / imgResRatio);
+				if(newImageHeight > imageFrame.offsetHeight){
+					newImageHeight = parseInt(newImageHeight - (newImageHeight - imageFrame.offsetHeight));
+					newImageWidth = parseInt(newImageHeight * imgResRatio);
+				}
+			}else{
+				var newImageHeight = parseInt(imageFrame.offsetHeight);
+				var newImageWidth = parseInt(newImageHeight * imgResRatio);
+				if(newImageWidth > imageFrame.offsetWidth){
+					newImageWidth = parseInt(newImageWidth - (newImageWidth - imageFrame.offsetWidth));
+					newImageHeight = parseInt(newImageWidth / imgResRatio);
+				} 
+			}
+			img.width = newImageWidth;
+			img.height = newImageHeight;
+			img.setAttribute('id', 'webberly-image-'+tagNumber);
+			imageFrame.appendChild(img);
 		}
 	},
 
@@ -304,7 +336,9 @@ var wby = {
 				newImg.style.width = '98%';
 				newImg.style.height = 'auto';
 			}*/
-			this.wbyOverlay.appendChild(newImg);
+			newImg.onload = function(){
+				wby.wbyOverlay.appendChild(newImg);
+			}
 		}
 	},
 
@@ -385,33 +419,46 @@ var wby = {
 		wby.toggleThumbNav();
 	},
 
-	procCrop : function(e){
+	moveReel : function(e){
 		if(wby.touchDown === true){
 			e = e || window.event;
-			e.preventDefault();
 			if(wby.touch === true){//Check to see whether handler was initiated by touch event in order to assign appropriate pointer position object
 				/*Calculate the distance between the previous and current touch position*/
-				wby.pointerMovX = wby.pointerPosX - e.changedTouches[0].clientX;
+				var pointerMovX = wby.pointerPosX - e.changedTouches[0].clientX;
+				var pointerMovY = wby.pointerPosY - e.changedTouches[0].clientY;
 				/*Save the current position*/
 				wby.pointerPosX = e.changedTouches[0].clientX;
+				wby.pointerPosY = e.changedTouches[0].clientY;
+				if(Math.abs(pointerMovY) > Math.abs(pointerMovX)){
+					if(wby.allowDefault == null){
+						wby.allowDefault = 1;
+					}
+				}else{
+					if(wby.allowDefault == null){
+						wby.allowDefault = 2;
+						wby.eventCache.preventDefault();
+						e.preventDefault();
+					}
+				}
 			}else{
+				e.preventDefault();
 				/*Calculate the distance between the previous and current pointer position*/
-				wby.pointerMovX = wby.pointerPosX - e.clientX;
+				var pointerMovX = wby.pointerPosX - e.clientX;
 				/*Save the current position*/
 				wby.pointerPosX = e.clientX;
 			}
 			/*Calculate the new image reel coordinates from the left of the positioned parent container*/
-			var reelPosition = parseFloat(wby.wbyImageReel.style.left.replace('px', '')) - wby.pointerMovX;//Left
+			var reelPosition = parseFloat(wby.wbyImageReel.style.left.replace('px', '')) - pointerMovX;//Left
 			
 			
 			/*Restrict image reel movement to image viewer bounds*/
-			if(reelPosition <= 0 && reelPosition >= wby.reelEndposition){	
+			if(reelPosition <= 0 && reelPosition >= wby.reelEndposition && (wby.allowDefault == null || wby.allowDefault == 2)){	
 				wby.wbyImageReel.style.left = reelPosition+'px';//Set css left property of the image reel
 			}
 		}
 	},
 	
-	cropHold : function(e){
+	holdReel : function(e){
 		e = e || window.event;
 		e.preventDefault();
 		wby.pointerPosX = e.clientX;
@@ -419,16 +466,18 @@ var wby = {
 		wby.wbyImageReel.style.cursor = 'grab';
 	},
 	
-	cropTouch : function(e){
+	touchReel : function(e){
 		e = e || window.event;
-		e.preventDefault();
+		wby.eventCache = e;
 		wby.pointerPosX = e.touches[0].clientX;
+		wby.pointerPosY = e.touches[0].clientY;
 		wby.touchDown = true;
 		wby.touch = true;
 	},
 	
-	cropRelease : function(){
+	releaseReel : function(){
 		wby.touch = false;
+		wby.allowDefault = null;
 		wby.wbyImageReel.style.cursor = 'default';
 		if(wby.touchDown === true){
 			wby.releaseGoTo();
