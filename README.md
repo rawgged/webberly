@@ -23,7 +23,7 @@ Webberly was created to give web developers an option of having an image viewer 
 <script type="text/javascript" src="webberly.js"></script>
 ```
 
-- Declare an array called wbyArray, Each sub array will contain the src of the image and the thumbnail
+- Declare an array called wbyArray, Each sub array will contain the src of the image, the src of the thumbnail and  the thumb image alt
 
 ```js
 wbyArray[0] = ['sample/images/large/image1.jpg','sample/images/thumbs/thumb1.jpg','Webberly'];
@@ -58,6 +58,8 @@ wbyHeight : 400,//Height of the gallery viewer
 - Webberly makes use of icomoon fonts which is located in the dependencies folder, if you already have icomoon loaded on your project just make reference to it on the target page
 
 ### Why you may need Webberly
+Webberly is very easy to deploy on your web/app projects.
+
 Webberly runs on plain js and php and has been tested and seen to have optimal performance on top modern browsers like Mozilla firefox, Google Chrome and Safari e.t.c
 
 Webberly is useful when it comes to projects with dynamic contents and images which gives it an edge over html and css image viewers with sliders.
