@@ -9,11 +9,11 @@
 
 var wby = {
 	webberly : null,//Property to store the target element object
-	requestDir : '',
+	requestDir : null,
 	/*
-	* This configuration preset setting assumes that webberly folder is placed on the home directory of your web/app, 
-	* change this setting to the absolute path of webberly folder e.g https://www.4relic.com/webberly/ or to the 
-	* relative path in reference to the target page e.g webberly/ , plugin/webberly/
+	* This configuration preset setting assumes that useJSOnly property is set to true.
+	* Otherwise, change this setting to the absolute path of the directory where webberly.php file is located e.g requestDir : 'https://www.4relic.com/webberly/', or to the 
+	* path of the directory relative to the target page e.g requestDir : 'webberly/', requestDir : 'plugin/webberly/',
 	*/
 	useJSOnly : true,//Set to false if you prefer images to load from php script
 	wbyHeight : 400,//Height of the gallery viewer
@@ -486,18 +486,21 @@ var wby = {
 	},
 	
 	releaseGoTo : function(){
-		var wbyMidPoint = this.webberly.offsetWidth/2;
+		var wbyMidPoint = this.webberly.offsetWidth/6;
 		var wbyImageReelPos = this.wbyImageReel.style.left.replace('px', '');
-		for(var i = 0;i < wbyArray.length;i++){
-			var distance = parseFloat(wbyImageReelPos) - wbyArray[i][3];
-			distance = Math.abs(distance);
-			if(distance <= wbyMidPoint){
-				var tagNumber = i + 1;
-				this.selectImage(tagNumber);
-				return;
+		var currImageReelPos = wbyArray[wby.currTagNumber - 1][3];
+		var distance = currImageReelPos - wbyImageReelPos;
+		distance = Math.abs(distance);
+		/*Improved the swipe responsiveness using currTagNumber property*/
+		if(distance >= wbyMidPoint){
+			if(wbyImageReelPos < currImageReelPos){
+				this.selectImage(wby.currTagNumber + 1);
+			}else{
+				this.selectImage(wby.currTagNumber - 1);
 			}
+		}else{
+			this.selectImage(wby.currTagNumber);
 		}
-		
 	}
 };
 wby.addEventHandler(window,'load',wby.init);
