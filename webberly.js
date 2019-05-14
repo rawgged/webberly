@@ -24,7 +24,6 @@ var wby = {
 	wbyThumb : '',//Property to store the html of the thumbnails
 	wbyOverlay : null,//Property to store expanded image dark overlay div object
 	reelAnimateStep : null,//Property to store the step for the scroll effect of the image reel
-	setIntervalVar : null,//Property to store the setInterval object for the animated scroll effect of image reel 
 	setTimeoutVar : null,//Property to store the XMLHttpRequest setTimeout object
 	goToPosition : null,//Property to store reel position of selected image
 	eventCache : null,//Property to cache touch event
@@ -39,7 +38,6 @@ var wby = {
 	wbyThumbReel : null,//Property to store the thumbnail reel object
 	goToPositionThumbReel : null,//Property to store the position of the current viewable area of the thumbnail reel
 	reelAnimateStepThumbReel : null,//Property to store the step for the scroll effect of the thumbnail reel
-	setIntervalVarThumbReel : null,//Property to store the setInterval object for the animated scroll effect of the thumbnail reel
 	xmlHttp : null,//Property to store the XMLHttpRequest object
 	init : function(){
 		//This method initialises webberly image gallery on page load
@@ -346,9 +344,9 @@ var wby = {
 		var wbyImageReelPos = this.wbyImageReel.style.left.replace('px', '');
 		var diff = parseFloat(wbyImageReelPos) - parseFloat(newPos);
 		diff = Math.abs(diff);
-		this.reelAnimateStep = diff/6;
+		this.reelAnimateStep = diff/10;
 		this.goToPosition = newPos;
-		setTimeout(this._gotoAnimate,200);
+		this._gotoAnimate();
 	},
 
 	_gotoAnimate : function(){
@@ -391,7 +389,7 @@ var wby = {
 		var diff = parseFloat(wbyThumbReelPos) - parseFloat(this.goToPositionThumbReel);
 		diff = Math.abs(diff);
 		this.reelAnimateStepThumbReel = diff/10;
-		setTimeout(this._gotoAnimateThumbReel,10);
+		this._gotoAnimateThumbReel();
 	},
 
 	_gotoAnimateThumbReel : function(){
