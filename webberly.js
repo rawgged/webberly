@@ -343,15 +343,12 @@ var wby = {
 	},
 
 	gotoAnimate : function(newPos){
-		if(this.setIntervalVar != null){
-			clearInterval(this.setIntervalVar);
-		}
 		var wbyImageReelPos = this.wbyImageReel.style.left.replace('px', '');
 		var diff = parseFloat(wbyImageReelPos) - parseFloat(newPos);
 		diff = Math.abs(diff);
-		this.reelAnimateStep = diff/10;
+		this.reelAnimateStep = diff/6;
 		this.goToPosition = newPos;
-		this.setIntervalVar = setInterval(this._gotoAnimate,5);
+		setTimeout(this._gotoAnimate,200);
 	},
 
 	_gotoAnimate : function(){
@@ -360,7 +357,6 @@ var wby = {
 		curDiff = Math.abs(curDiff);
 		if(parseFloat(wby.reelAnimateStep) >= curDiff){
 			wby.wbyImageReel.style.left = parseFloat(wby.goToPosition)+'px';
-			clearInterval(wby.setIntervalVar);
 		}else{
 			if(parseFloat(wbyImageReelPos) > parseFloat(wby.goToPosition)){
 				var currentPos = parseFloat(wbyImageReelPos) - parseFloat(wby.reelAnimateStep);
@@ -368,13 +364,11 @@ var wby = {
 				var currentPos = parseFloat(wbyImageReelPos) + parseFloat(wby.reelAnimateStep);
 			}
 			wby.wbyImageReel.style.left = currentPos+'px';
+			setTimeout(wby._gotoAnimate,5);
 		}
 	},
 
 	scrollThumbReel : function(dir){
-		if(this.setIntervalVarThumbReel != ''){
-			clearInterval(this.setIntervalVarThumbReel);
-		}
 		var wbyThumbReelFrame = document.getElementById('webberly-thumbnail-reel-frame');
 		this.wbyThumbReel = document.getElementById('webberly-thumbnail-reel');
 		var bound = parseFloat(this.wbyThumbReel.offsetWidth) - parseFloat(wbyThumbReelFrame.offsetWidth);
@@ -397,7 +391,7 @@ var wby = {
 		var diff = parseFloat(wbyThumbReelPos) - parseFloat(this.goToPositionThumbReel);
 		diff = Math.abs(diff);
 		this.reelAnimateStepThumbReel = diff/10;
-		this.setIntervalVarThumbReel = setInterval(this._gotoAnimateThumbReel,10);
+		setTimeout(this._gotoAnimateThumbReel,10);
 	},
 
 	_gotoAnimateThumbReel : function(){
@@ -407,7 +401,6 @@ var wby = {
 		curDiff = Math.abs(curDiff);
 		if(parseFloat(wby.reelAnimateStepThumbReel) >= curDiff){
 			wby.wbyThumbReel.style.left = parseFloat(wby.goToPositionThumbReel)+'px';
-			clearInterval(wby.setIntervalVarThumbReel);
 		}else{
 			if(parseFloat(wbyThumbReelPos) > parseFloat(wby.goToPositionThumbReel)){
 				var currentPos = parseFloat(wbyThumbReelPos) - parseFloat(wby.reelAnimateStepThumbReel);
@@ -415,6 +408,7 @@ var wby = {
 				var currentPos = parseFloat(wbyThumbReelPos) + parseFloat(wby.reelAnimateStepThumbReel);
 			}
 			wby.wbyThumbReel.style.left = currentPos+'px';
+			setTimeout(wby._gotoAnimateThumbReel,10);
 		}
 		wby.toggleThumbNav();
 	},
