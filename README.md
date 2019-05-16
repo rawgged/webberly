@@ -38,15 +38,13 @@ useJSOnly : true,//Set to false if you prefer images to load from php script
 - If useJSOnly is set to false, you will have to set the requestDir property to the full absolute path of the directory webberly.php script is located or to the path of the directory relative to the target page.
 
 ```js
-requestDir : 'https://www.4relic.com/webberly/',
-//or
-//requestDir : 'webberly/', assuming target page is located on the home directory 
+requestDir : null,
 	/*
-	* This configuration preset setting assumes that webberly folder is placed on the home directory of your web/app, 
-	* change this setting to the absolute path of webberly folder e.g https://www.4relic.com/webberly/ or to the 
-	* relative path in reference to the target page e.g webberly/ , plugin/webberly/
+	* This configuration preset setting assumes that useJSOnly property is set to true.
+	* Otherwise, change this setting to the absolute path of the directory where webberly.php file is located e.g requestDir : 'https://www.4relic.com/webberly/', or to the 
+	* path of the directory relative to the target page e.g requestDir : 'webberly/', requestDir : 'plugin/webberly/',
 	*/
-	useJSOnly : false,//Set to false if you prefer images to load from php script
+	useJSOnly : true,//Set to false if you prefer images to load from php script
 ```
 
 - Webberly gallery width is fluid so its adapts to the width of its parent container. However, you can modify the gallery height by adjusting the wbyHeight property
