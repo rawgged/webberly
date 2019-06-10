@@ -23,9 +23,8 @@ var wby = {
 	wbyImg : '',//Property to store the html of the images
 	wbyThumb : '',//Property to store the html of the thumbnails
 	wbyOverlay : null,//Property to store expanded image dark overlay div object
-	reelAnimateStep : null,//Property to store the step for the scroll effect of the image reel
+	reelAnimateDistance : null,//Property to store the distance between the origin and destination of the image reel
 	setTimeoutVar : null,//Property to store the XMLHttpRequest setTimeout object
-	goToPosition : null,//Property to store reel position of selected image
 	eventCache : null,//Property to cache touch event
 	pointerPosX : null,//Property to store horizontal pointer or touch position
 	pointerPosY : null,//Property to store vertical touch position to determine if we will prevent touchstart and touchmove default events based on the vertical and horizontal movement variation 
@@ -36,8 +35,12 @@ var wby = {
 	thumbSize : 70,//Property to store the value for the width and height of the thumbnails
 	thumbReelWidth : null,//Property to store width of the thumbnail reel
 	wbyThumbReel : null,//Property to store the thumbnail reel object
-	goToPositionThumbReel : null,//Property to store the position of the current viewable area of the thumbnail reel
-	reelAnimateStepThumbReel : null,//Property to store the step for the scroll effect of the thumbnail reel
+	reelAnimateDistanceThumbReel : null,//Property to store the distance between the origin and destination of the thumbnail reel
+	cssTransitionPropertyIsSupported : false,//Property to store the css [vendor prefix] transition property supported by the browser, false if none
+	animateStartTime : null,//Property to store the start time of the image reel movement transition
+	wbyImageReelStart : null,//Property to store the position of the image reel prior to movement transition
+	animateStartTimeThumbReel : null,//Property to store the start time of the thumbnail reel movement transition
+	wbyThumbReelStart : null,//Property to store the position of the thumbnail reel prior to movement transition
 	xmlHttp : null,//Property to store the XMLHttpRequest object
 	init : function(){
 		//This method initialises webberly image gallery on page load
@@ -50,12 +53,10 @@ var wby = {
 			for(var i = 0;i < wbyArray.length;i++){
 				var tagNumber = i + 1;var reelPosition = 0 - (i * wby.webberly.offsetWidth);
 				wbyArray[i][3] = reelPosition;
-				var thumbPreview = new Image();
-				thumbPreview.src = wbyArray[i][1];
 				wby.wbyImg += '<div id="webberly-image-parent-'+tagNumber+'" class="wby-main-image-frame" style="width:'+wby.webberly.offsetWidth+'px;height:'+wby.wbyHeight+'px;"></div>';
 				wby.wbyThumb += '<div class="wby-thumbnail-frame wby-responsive-width"><a id="webberly-thumb-'+tagNumber+'" href="javascript:void(0);" onclick="wby.selectImage('+tagNumber+')"><img src="'+wbyArray[i][1]+'" alt="'+wbyArray[i][2]+'"></a></div>';
 			}
-			wby.webberly.innerHTML = '<div class="wby-gallery-frame" style="height:'+wby.wbyHeight+'px"><div class="wby-alt"><i class="icon-images"></i><span id="webberly-alt">'+wbyArray.length+'</span></div><a href="javascript:void(0);" class="wby-gallery-tools" onclick="wby.enlargeView()"><i  class="icon-enlarge2"></i></a><div id="webberly-image-reel" class="wby-main-image-reel" style="width:'+wby.wbyReelWidth+'px;height:'+wby.wbyHeight+'px;left:0px;">'+wby.wbyImg+'</div><div id="webberly-thumbnail-reel-frame" class="wby-thumbnail-reel-frame"><div id="webberly-thumbnail-reel" class="wby-thumbnail-reel" style="width:'+wby.thumbReelWidth+'px;left:0px;">'+wby.wbyThumb+'</div><a href="javascript:void(0);" onclick="wby.scrollThumbReel(\'left\');" id="webberly-thumb-left" class="wby-nav-btn" style="left:0px;display:none;"><i class="icon-arrow-left"></i></a><a href="javascript:void(0);" onclick="wby.scrollThumbReel(\'right\');" id="webberly-thumb-right" class="wby-nav-btn" style="right:0px;display:none;"><i class="icon-arrow-right"></i></a></div></div>';
+			wby.webberly.innerHTML = '<div class="wby-gallery-frame" style="height:'+wby.wbyHeight+'px"><div class="wby-alt"><i class="icon-images"></i><span id="webberly-alt">'+wbyArray.length+'</span></div><a href="javascript:void(0);" class="wby-gallery-tools" onclick="wby.enlargeView()"><i  class="icon-enlarge2"></i></a><div id="webberly-image-reel" class="wby-main-image-reel wby-transition" style="width:'+wby.wbyReelWidth+'px;height:'+wby.wbyHeight+'px;left:0px;">'+wby.wbyImg+'</div><div id="webberly-thumbnail-reel-frame" class="wby-thumbnail-reel-frame"><div id="webberly-thumbnail-reel" class="wby-thumbnail-reel wby-transition" style="width:'+wby.thumbReelWidth+'px;left:0px;">'+wby.wbyThumb+'</div><a href="javascript:void(0);" onclick="wby.scrollThumbReel(\'left\');" id="webberly-thumb-left" class="wby-nav-btn" style="left:0px;display:none;"><i class="icon-arrow-left"></i></a><a href="javascript:void(0);" onclick="wby.scrollThumbReel(\'right\');" id="webberly-thumb-right" class="wby-nav-btn" style="right:0px;display:none;"><i class="icon-arrow-right"></i></a></div></div>';
 			/*This method was used to ensure that no parentNode styles affects the overlay
 			*Overlay was appended to the body
 			*/
@@ -67,6 +68,7 @@ var wby = {
 			wby.wbyOverlay.innerHTML = '<a href="javascript:void(0);" class="wby-gallery-tools" onclick="this.parentNode.style.display=\'none\'"><i  class="icon-shrink2"></i></a>';
 			document.body.appendChild(wby.wbyOverlay);
 			wby.wbyImageReel = document.getElementById('webberly-image-reel');
+			wby.cssTransitionPropertyIsSupported = wby.cssTransitionPropertySupported();
 			wby.wbyThumbReel = document.getElementById('webberly-thumbnail-reel');
 			wby.scaleThumbnails();
 			wby.toggleThumbNav();
@@ -341,31 +343,35 @@ var wby = {
 	},
 
 	gotoAnimate : function(newPos){
-		var wbyImageReelPos = this.wbyImageReel.style.left.replace('px', '');
-		var diff = parseFloat(wbyImageReelPos) - parseFloat(newPos);
-		diff = Math.abs(diff);
-		this.reelAnimateStep = diff/10;
-		this.goToPosition = newPos;
-		this._gotoAnimate();
-	},
-
-	_gotoAnimate : function(){
-		var wbyImageReelPos = wby.wbyImageReel.style.left.replace('px', '');
-		var curDiff = parseFloat(wbyImageReelPos) - parseFloat(wby.goToPosition);
-		curDiff = Math.abs(curDiff);
-		if(parseFloat(wby.reelAnimateStep) >= curDiff){
-			wby.wbyImageReel.style.left = parseFloat(wby.goToPosition)+'px';
+		if(this.cssTransitionPropertyIsSupported === false){
+			this.wbyImageReelStart = parseFloat(this.wbyImageReel.style.left.replace('px', ''));
+			this.animateStartTime = new Date().getTime();
+			this.reelAnimateDistance = parseFloat(newPos) - parseFloat(this.wbyImageReelStart);
+			this._gotoAnimate();
 		}else{
-			if(parseFloat(wbyImageReelPos) > parseFloat(wby.goToPosition)){
-				var currentPos = parseFloat(wbyImageReelPos) - parseFloat(wby.reelAnimateStep);
-			}else if(parseFloat(wbyImageReelPos) < parseFloat(wby.goToPosition)){
-				var currentPos = parseFloat(wbyImageReelPos) + parseFloat(wby.reelAnimateStep);
-			}
-			wby.wbyImageReel.style.left = currentPos+'px';
-			setTimeout(wby._gotoAnimate,5);
+			this.addCssTransition(this.wbyImageReel);
+			this.wbyImageReel.style.left = newPos+'px';
+		}			
+	},
+	
+	_gotoAnimate : function(){
+		var currentTime = new Date().getTime();
+		var timeFraction = (currentTime - wby.animateStartTime) / 250;
+		timeFraction = timeFraction > 1 ? 1 : timeFraction;
+		//Ease-in-out timing function code
+		if(timeFraction <= 0.5) {
+			timeFraction = (2 * timeFraction) / 2;
+		}else{
+			timeFraction = (2 - (2 * (1 - timeFraction))) / 2;
+		}
+		//End
+		var currentPos = wby.wbyImageReelStart + (parseFloat(timeFraction) * parseFloat(wby.reelAnimateDistance));
+		wby.wbyImageReel.style.left = currentPos+'px';
+		if(timeFraction < 1){
+			window.requestAnimationFrame(wby._gotoAnimate);
 		}
 	},
-
+	
 	scrollThumbReel : function(dir){
 		var wbyThumbReelFrame = document.getElementById('webberly-thumbnail-reel-frame');
 		this.wbyThumbReel = document.getElementById('webberly-thumbnail-reel');
@@ -378,37 +384,42 @@ var wby = {
 		}
 		var realBound = 0 - bound;
 		if(step > realBound && step < 0){
-			this.goToPositionThumbReel = step;
+			var newPos = step;
 		}else{
 			if(step <= realBound){
-				this.goToPositionThumbReel = realBound;
+				var newPos = realBound;
 			}else{
-				this.goToPositionThumbReel = 0;
+				var newPos = 0;
 			}
 		}
-		var diff = parseFloat(wbyThumbReelPos) - parseFloat(this.goToPositionThumbReel);
-		diff = Math.abs(diff);
-		this.reelAnimateStepThumbReel = diff/10;
-		this._gotoAnimateThumbReel();
-	},
-
-	_gotoAnimateThumbReel : function(){
-		wby.wbyThumbReel = document.getElementById('webberly-thumbnail-reel');
-		var wbyThumbReelPos = wby.wbyThumbReel.style.left.replace('px', '');
-		var curDiff = parseFloat(wbyThumbReelPos) - parseFloat(wby.goToPositionThumbReel);
-		curDiff = Math.abs(curDiff);
-		if(parseFloat(wby.reelAnimateStepThumbReel) >= curDiff){
-			wby.wbyThumbReel.style.left = parseFloat(wby.goToPositionThumbReel)+'px';
+		if(this.cssTransitionPropertyIsSupported === false){
+			this.wbyThumbReelStart = parseFloat(wbyThumbReelPos);
+			this.animateStartTimeThumbReel = new Date().getTime();
+			this.reelAnimateDistanceThumbReel = parseFloat(newPos) - parseFloat(this.wbyThumbReelStart);
+			this._gotoAnimateThumbReel();
 		}else{
-			if(parseFloat(wbyThumbReelPos) > parseFloat(wby.goToPositionThumbReel)){
-				var currentPos = parseFloat(wbyThumbReelPos) - parseFloat(wby.reelAnimateStepThumbReel);
-			}else if(parseFloat(wbyThumbReelPos) < parseFloat(wby.goToPositionThumbReel)){
-				var currentPos = parseFloat(wbyThumbReelPos) + parseFloat(wby.reelAnimateStepThumbReel);
-			}
-			wby.wbyThumbReel.style.left = currentPos+'px';
-			setTimeout(wby._gotoAnimateThumbReel,10);
+			this.wbyThumbReel.style.left = newPos+'px';
+			this.toggleThumbNav();
 		}
+	},
+	
+	_gotoAnimateThumbReel : function(){
+		var currentTime = new Date().getTime();
+		var timeFraction = (currentTime - wby.animateStartTimeThumbReel) / 250;
+		timeFraction = timeFraction > 1 ? 1 : timeFraction;
+		//Ease-in-out timing function code
+		if(timeFraction <= 0.5) {
+			timeFraction = (2 * timeFraction) / 2;
+		}else{
+			timeFraction = (2 - (2 * (1 - timeFraction))) / 2;
+		}
+		//End
+		var currentPos = wby.wbyThumbReelStart + (parseFloat(timeFraction) * parseFloat(wby.reelAnimateDistanceThumbReel));
+		wby.wbyThumbReel.style.left = currentPos+'px';
 		wby.toggleThumbNav();
+		if(timeFraction < 1){
+			window.requestAnimationFrame(wby._gotoAnimateThumbReel);
+		}
 	},
 
 	moveReel : function(e){
@@ -444,7 +455,8 @@ var wby = {
 			
 			
 			/*Restrict image reel movement to image viewer bounds*/
-			if(reelPosition <= 0 && reelPosition >= wby.reelEndposition && (wby.allowDefault == null || wby.allowDefault == 2)){	
+			if(reelPosition <= 0 && reelPosition >= wby.reelEndposition && (wby.allowDefault == null || wby.allowDefault == 2)){
+				wby.removeCssTransition(wby.wbyImageReel);
 				wby.wbyImageReel.style.left = reelPosition+'px';//Set css left property of the image reel
 			}
 		}
@@ -493,6 +505,30 @@ var wby = {
 		}else{
 			this.selectImage(wby.currTagNumber);
 		}
+	},
+	
+	cssTransitionPropertySupported : function(){
+		//This property checks for css transition browser support against all vendor prefixes
+		var prop = 'transition';
+		var vendors = 'Khtml Ms O Moz Webkit'.split(' ');
+		if(prop in this.wbyImageReel.style){
+			return prop;
+		}
+		for(var i = 0;i < vendors.length;i++){
+			vProp = vendors[i].charAt(0).toUpperCase() + prop; 
+			if(vProp in this.wbyImageReel.style){
+				return vProp;
+			}
+		}
+		return false;
+	},
+	
+	addCssTransition : function(obj){
+		obj.style[this.cssTransitionPropertyIsSupported] = 'all 0.25s ease 0s';
+	},
+	
+	removeCssTransition : function(obj){
+		obj.style[this.cssTransitionPropertyIsSupported] = 'all 0s ease 0s';
 	}
 };
 wby.addEventHandler(window,'load',wby.init);
