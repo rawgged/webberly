@@ -1,5 +1,5 @@
 # Webberly
-A responsive and neat image viewer with rich UI for web/app projects written with plain js, css and php
+A responsive and neat image viewer with rich UI for web/app projects written with vanilla js, css and php
 
 Build status: [![Build Status](https://travis-ci.org/PHPMailer/PHPMailer.svg)](https://travis-ci.org/PHPMailer/PHPMailer)
 
